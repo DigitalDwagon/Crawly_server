@@ -4,18 +4,27 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a4b7123-3cdb-4546-91fd-a6be12d7a2f7" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/Main.java" afterDir="false" />
+    <list default="true" id="8a4b7123-3cdb-4546-91fd-a6be12d7a2f7" name="Changes" comment="commit 1">
+      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/database/mongo/MongoManager.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/queue/CrawlManager.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/queue/ItemManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/URLInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/URLInfo.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -29,20 +38,23 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Digital/Desktop/dev_archive/Crawly_server&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
-    <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+    <configuration name="dev.digitaldragon.Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="dev.digitaldragon.Main" />
       <module name="Crawly_server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="dev.digitaldragon.*" />
+          <option name="PATTERN" value="dev.digitaldragon.database.mongo.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
@@ -52,7 +64,7 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.Main" />
+        <item itemvalue="Application.dev.digitaldragon.Main" />
       </list>
     </recent_temporary>
   </component>
@@ -64,8 +76,19 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1680038700653</updated>
-      <workItem from="1680038701915" duration="3953000" />
+      <workItem from="1680038701915" duration="20427000" />
+      <workItem from="1682116982276" duration="2397000" />
+      <workItem from="1683001092538" duration="2687000" />
+      <workItem from="1683304100386" duration="11138000" />
     </task>
+    <task id="LOCAL-00001" summary="commit 1">
+      <created>1680221779195</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1680221779195</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -81,5 +104,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="commit 1" />
+    <option name="LAST_COMMIT_MESSAGE" value="commit 1" />
   </component>
 </project>
