@@ -17,7 +17,7 @@ import java.util.*;
 
 public class CrawlManager {
 
-    public static List<String> getUniqueDomainUrls(int numUrls, String user) {
+    public static List<String> getUniqueDomainUrls(int numUrls, String user) { //TODO rewrite to use read and write caches
         MongoCollection<Document> queueCollection = MongoManager.getQueueCollection();
         MongoCollection<Document> outCollection = MongoManager.getOutCollection();
 

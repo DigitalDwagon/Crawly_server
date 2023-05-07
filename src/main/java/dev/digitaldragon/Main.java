@@ -23,16 +23,13 @@ public class Main {
 
     public static void main(String[] args) {
         MongoManager.initializeDb();
-        System.out.println("0");
 
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "TRACE");
         Spark.port(1234);
         Spark.init();
 
-        System.out.println("2");
         // Define a before filter to validate the username
-        before((request, response) -> {
-            System.out.println("3");
+        before("/queue", (request, response) -> {
             String username = request.queryParams("username");
             if (username == null || username.isEmpty()) {
                 response.status(400);
@@ -40,7 +37,7 @@ public class Main {
                 halt();
             }
         });
-        System.out.println("4");
+
         get("/queue", (request, response) -> {
             response.type("application/json");
             String username = request.queryParams("username");
@@ -74,7 +71,7 @@ public class Main {
 
         post("/queue", (request, response) -> {
             response.type("application/json");
-            String username = validateUsername(request.queryParams("username"));
+            String username = request.queryParams("username");
 
             JSONObject jsonObject = new JSONObject(request.body());
             Set<String> InputUrls = jsonObject.getJSONArray("urls").toList().stream().map(Object::toString).collect(Collectors.toSet());
@@ -85,9 +82,9 @@ public class Main {
         });
 
 
-        post("/submit", (request, response) ->  {
+        post("/submit", (request, response) -> {
             response.type("application/json");
-            String username = validateUsername(request.queryParams("username"));
+
 
             // grab and parse json
             JSONObject jsonObject = new JSONObject(request.body());
@@ -97,7 +94,7 @@ public class Main {
             JSONArray discovered = jsonObject.getJSONArray("discovered");
             Set<String> urls = discovered.toList().stream().map(Object::toString).collect(Collectors.toSet());
             System.out.printf("Sending %s items for deduplication and queuing%n", urls.size());
-            ItemManager.bulkQueueURLs(urls, username);
+            ItemManager.bulkQueueURLs(urls, crawlerUsername);
 
             // submit finished url to done
             ItemManager.submitCrawlInfo(jsonObject);
@@ -112,11 +109,5 @@ public class Main {
             WriteManager.flush(true);
             System.out.println("Writes flushed.");
         }));
-    }
-    private static String validateUsername(String username) {
-        if (username == null || username.isEmpty()) {
-            throw new IllegalArgumentException("Username is required");
-        }
-        return username;
     }
 }
