@@ -1,5 +1,6 @@
 package dev.digitaldragon;
 
+import dev.digitaldragon.database.WriteManager;
 import dev.digitaldragon.database.mongo.MongoManager;
 import dev.digitaldragon.queue.CrawlManager;
 import dev.digitaldragon.queue.ItemManager;
@@ -82,7 +83,7 @@ public class Main {
             // queue up discovered urls
             JSONArray discovered = jsonObject.getJSONArray("discovered");
             Set<String> urls = discovered.toList().stream().map(Object::toString).collect(Collectors.toSet());
-            System.out.println(String.format("Sending %s items for deduplication and queuing", urls.size()));
+            System.out.printf("Sending %s items for deduplication and queuing%n", urls.size());
             ItemManager.bulkQueueURLs(urls, username);
 
             // submit finished url to done
@@ -90,6 +91,12 @@ public class Main {
 
             return new JSONObject(Map.of("status", "ok")).toString();
         });
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Flushing writes...");
+            WriteManager.flush(true);
+            System.out.println("Writes flushed.");
+        }));
     }
     private static String validateUsername(String username) {
         if (username == null || username.isEmpty()) {
