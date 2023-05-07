@@ -1,56 +1,52 @@
 package dev.digitaldragon;
 
-import static spark.Spark.get;
-import static spark.Spark.post;
-
 import dev.digitaldragon.database.mongo.MongoManager;
 import dev.digitaldragon.queue.CrawlManager;
 import dev.digitaldragon.queue.ItemManager;
+import org.bson.json.JsonObject;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static spark.Spark.*;
 
 
 public class Main {
     public static void main(String[] args) {
         MongoManager.initializeDb();
 
-        get("/queue", (request, response) ->  {
-            response.type("application/json");
-
-            String username;
-            try {
-                username = validateUsername(request.queryParams("username"));
-            } catch (IllegalArgumentException e) {
-                JSONObject responseJson = new JSONObject();
-                responseJson.put("error", "must use a username");
-                return responseJson.toString();
+        // Define a before filter to validate the username
+        before((request, response) -> {
+            String username = request.queryParams("username");
+            if (username == null || username.isEmpty()) {
+                response.status(400);
+                response.body(new JSONObject(Map.of("error", "usernames are required on this route")).toString());
+                halt();
             }
+        });
+
+        get("/queue", (request, response) -> {
+            response.type("application/json");
+            String username = request.queryParams("username");
 
             int amount = 1;
             try {
                 amount = Integer.parseInt(request.queryParams("amount"));
-                if (amount <= 0) {
-                    amount = 1;
-                }
-                if (amount > 2000) {
-                    amount = 2000;
-                }
+                amount = Math.min(Math.max(amount, 1), 2000);
             } catch (NumberFormatException e) {
                 // Ignore exception and use default amount of 1
             }
 
-            JSONArray urlsJsonArray = new JSONArray();
             List<String> urls = CrawlManager.getUniqueDomainUrls(amount, username);
 
-            for (String s : urls) {
-                urlsJsonArray.put(s);
-                System.out.println(s);
+            if (urls.isEmpty()) {
+                response.status(500);
+                return new JSONObject(Map.of("error", "queue empty or error fetching from queue")).toString();
             }
+
+            JSONArray urlsJsonArray = new JSONArray(urls);
 
             JSONObject responseJson = new JSONObject();
             responseJson.put("urls", urlsJsonArray);
@@ -58,63 +54,41 @@ public class Main {
             return responseJson.toString();
         });
 
+        get("/queue/domains", (request, response) -> {
+            return new JsonObject(Map.of("domains", CrawlManager.uniqueDomains()).toString());
+        });
+
         post("/queue", (request, response) -> {
             response.type("application/json");
-
-            String username;
-            try {
-                username = validateUsername(request.queryParams("username"));
-            } catch (IllegalArgumentException e) {
-                JSONObject responseJson = new JSONObject();
-                responseJson.put("error", "must use a username");
-                return responseJson.toString();
-            }
+            String username = validateUsername(request.queryParams("username"));
 
             JSONObject jsonObject = new JSONObject(request.body());
-            JSONArray urls = jsonObject.getJSONArray("urls");
-            Set<String> urlSet = new HashSet<>();
+            Set<String> InputUrls = jsonObject.getJSONArray("urls").toList().stream().map(Object::toString).collect(Collectors.toSet());
 
-            for (int i = 0; i < urls.length(); i++) {
-                urlSet.add(urls.getString(i));
-            }
-            ItemManager.bulkQueueURLs(urlSet, username);
+            ItemManager.bulkQueueURLs(InputUrls, username);
 
-            return new JSONObject().put("success", "true").toString();
+            return new JSONObject(Map.of("success", true)).toString();
         });
 
 
         post("/submit", (request, response) ->  {
             response.type("application/json");
+            String username = validateUsername(request.queryParams("username"));
 
-            String username;
-            try {
-                username = validateUsername(request.queryParams("username"));
-            } catch (IllegalArgumentException e) {
-                JSONObject responseJson = new JSONObject();
-                responseJson.put("error", "must use a username");
-                return responseJson.toString();
-            }
-
-
-
-            System.out.println(request.body());  //todo logging print
-
-            //grab and parse json
+            // grab and parse json
             JSONObject jsonObject = new JSONObject(request.body());
             String crawlerUsername = jsonObject.getString("username");
-            System.out.println(crawlerUsername); //todo logging print
 
-            //queue up discovered urls
+            // queue up discovered urls
             JSONArray discovered = jsonObject.getJSONArray("discovered");
-            System.out.println("Deduplicating and queueing " + discovered.length() + " urls.");
-            for (int i = 0; i < discovered.length(); i++ ) {
-                ItemManager.queueURL(discovered.get(i).toString(), username);
-            }
+            Set<String> urls = discovered.toList().stream().map(Object::toString).collect(Collectors.toSet());
+            System.out.println(String.format("Sending %s items for deduplication and queuing", urls.size()));
+            ItemManager.bulkQueueURLs(urls, username);
 
-            //submit finished url to done
+            // submit finished url to done
             ItemManager.submitCrawlInfo(jsonObject);
 
-            return "{\"status\":\"ok\"}";
+            return new JSONObject(Map.of("status", "ok")).toString();
         });
     }
     private static String validateUsername(String username) {
