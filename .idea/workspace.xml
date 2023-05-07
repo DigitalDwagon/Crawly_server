@@ -4,10 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a4b7123-3cdb-4546-91fd-a6be12d7a2f7" name="Changes" comment="working on write cache">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="8a4b7123-3cdb-4546-91fd-a6be12d7a2f7" name="Changes" comment="begin switching methods to write cache, add temporary method for proxying bulk writes until methods receive a proper update.">
       <change beforePath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/database/WriteManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/database/WriteManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/queue/CrawlManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/queue/CrawlManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/queue/ItemManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/queue/ItemManager.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -82,6 +82,7 @@
       <workItem from="1683001092538" duration="2687000" />
       <workItem from="1683304100386" duration="27581000" />
       <workItem from="1683430738134" duration="3480000" />
+      <workItem from="1683434250911" duration="944000" />
     </task>
     <task id="LOCAL-00001" summary="commit 1">
       <created>1680221779195</created>
@@ -111,7 +112,21 @@
       <option name="project" value="LOCAL" />
       <updated>1683433088895</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="dev port now 1234, cleanup of write cache">
+      <created>1683434333503</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1683434333503</updated>
+    </task>
+    <task id="LOCAL-00006" summary="begin switching methods to write cache, add temporary method for proxying bulk writes until methods receive a proper update.">
+      <created>1683435065813</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1683435065813</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -133,6 +148,8 @@
     <MESSAGE value="everything is working!" />
     <MESSAGE value="so it works but turns out the queue grows FAST and mongo/my code just can't keep up." />
     <MESSAGE value="working on write cache" />
-    <option name="LAST_COMMIT_MESSAGE" value="working on write cache" />
+    <MESSAGE value="dev port now 1234, cleanup of write cache" />
+    <MESSAGE value="begin switching methods to write cache, add temporary method for proxying bulk writes until methods receive a proper update." />
+    <option name="LAST_COMMIT_MESSAGE" value="begin switching methods to write cache, add temporary method for proxying bulk writes until methods receive a proper update." />
   </component>
 </project>

@@ -23,25 +23,23 @@ import java.util.concurrent.Executors;
 import static com.mongodb.client.model.Filters.eq;
 
 public class ItemManager {
-    public static void bulkQueueURLs(Set<String> urls, String username) {
+    public static void bulkQueueURLs(Set<String> urls, String username) { //TODO read cache
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> {
             // Load all necessary collections
             MongoCollection<Document> queueCollection = MongoManager.getQueueCollection();
             MongoCollection<Document> outCollection = MongoManager.getOutCollection();
             MongoCollection<Document> doneCollection = MongoManager.getDoneCollection();
-            MongoCollection<Document> duplicatesCollection = MongoManager.getDuplicatesCollection();
-            MongoCollection<Document> rejectsCollection = MongoManager.getRejectsCollection();
 
             // Group URLs by collection to which they belong
             Map<MongoCollection<Document>, List<Document>> documentsByCollection = new HashMap<>();
             for (String url : urls) {
-                MongoCollection<Document> endCollection = rejectsCollection;
+                Database endDatabase = Database.REJECTS;
 
                 try {
                     URI uri = new URI(url);
                     if (uri.getScheme() != null && uri.getHost() != null) {
-                        endCollection = queueCollection;
+                        endDatabase = Database.QUEUE;
                     }
                 } catch (URISyntaxException e) {
                     //do nothing, already assigned as a reject
@@ -49,14 +47,14 @@ public class ItemManager {
 
 
                 if (duplicationChecker(doneCollection, url) || duplicationChecker(outCollection, url) || duplicationChecker(queueCollection, url)) {
-                    endCollection = duplicatesCollection;
+                    endDatabase = Database.DUPLICATES;
                 }
 
-                Document document = new Document("url", url)
+                JSONObject write = new JSONObject("url", url)
                         .append("queuedAt", Time.from(Instant.now()).toString())
                         .append("queuedBy", username);
 
-                documentsByCollection.computeIfAbsent(endCollection, k -> new ArrayList<>()).add(document);
+                WriteManager.itemAdd(endDatabase, write);
             }
 
             // Perform bulk writes for each collection
@@ -74,7 +72,7 @@ public class ItemManager {
      // check if a record for this url already exists
      // ---------------------
      // todo does not account for same urls with or without ending / (eg https://example.com/ is not treated the same as https://example.com)
-     private static boolean duplicationChecker(MongoCollection<Document> collection, String url) {
+     private static boolean duplicationChecker(MongoCollection<Document> collection, String url) { //TODO read cache
          Bson filter = Filters.eq("url", url);
          try (MongoCursor<Document> cursor = collection.find(filter).iterator()) {
              return cursor.hasNext();
