@@ -91,29 +91,4 @@ public class ItemManager {
 
         });
     }
-
-    public static String getQueuedURL() {
-        MongoCollection<Document> queueCollection = MongoManager.getQueueCollection();
-        MongoCollection<Document> outCollection = MongoManager.getOutCollection();
-
-        Document document = queueCollection.aggregate(Arrays.asList(Aggregates.sample(1))).first();
-
-        if (document == null) { return null; }
-
-        queueCollection.deleteOne(document);
-        outCollection.insertOne(document);
-
-        System.out.println("Queued: " + document.get("url"));
-        return document.get("url").toString(); //todo shouldnt have to tostring a string
-    }
-
-    private static boolean isRatelimited(String ip, String domain) {
-
-
-
-
-        return false;
-    }
-
-
 }
