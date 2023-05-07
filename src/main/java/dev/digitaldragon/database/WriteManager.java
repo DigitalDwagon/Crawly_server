@@ -11,6 +11,7 @@ import org.bson.conversions.Bson;
 import org.bson.json.JsonObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class WriteManager {
@@ -39,29 +40,22 @@ public class WriteManager {
         MongoCollection<Document> duplicatesCollection = MongoManager.getDuplicatesCollection();
         MongoCollection<Document> rejectsCollection = MongoManager.getRejectsCollection();
 
-        if ((queueWrites.size() >= 5000 || force) && !queueWrites.isEmpty()) {
-            queueCollection.bulkWrite(queueWrites);
-            queueWrites.clear();
-        }
-        if ((outWrites.size() >= 5000 || force) && !outWrites.isEmpty()) {
-            outCollection.bulkWrite(outWrites);
-            outWrites.clear();
-        }
-        if ((doneWrites.size() >= 5000 || force) && !doneWrites.isEmpty()) {
-            doneCollection.bulkWrite(doneWrites);
-            doneWrites.clear();
-        }
-        if ((duplicatesWrites.size() >= 5000 || force) && !duplicatesWrites.isEmpty()) {
-            duplicatesCollection.bulkWrite(duplicatesWrites);
-            duplicatesWrites.clear();
-        }
-        if ((rejectsWrites.size() >= 5000 || force) && !rejectsWrites.isEmpty()) {
-            rejectsCollection.bulkWrite(rejectsWrites);
-            rejectsWrites.clear();
+        List<List<WriteModel<Document>>> writeLists = Arrays.asList(
+                queueWrites, outWrites, doneWrites, duplicatesWrites, rejectsWrites);
+        List<MongoCollection<Document>> collectionList = Arrays.asList(
+                queueCollection, outCollection, doneCollection, duplicatesCollection, rejectsCollection);
+
+        for (int i = 0; i < writeLists.size(); i++) {
+            List<WriteModel<Document>> writes = writeLists.get(i);
+            MongoCollection<Document> collection = collectionList.get(i);
+            if ((force || writes.size() >= 5000) && !writes.isEmpty()) {
+                collection.bulkWrite(writes);
+                writes.clear();
+            }
         }
     }
 
-    public void flush() {
+    public static void flush() {
         flush(false);
     }
 }

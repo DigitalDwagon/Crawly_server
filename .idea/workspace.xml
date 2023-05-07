@@ -4,12 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a4b7123-3cdb-4546-91fd-a6be12d7a2f7" name="Changes" comment="everything is working!">
-      <change afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/database/mongo/MongoRepository.java" afterDir="false" />
+    <list default="true" id="8a4b7123-3cdb-4546-91fd-a6be12d7a2f7" name="Changes" comment="working on write cache">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/queue/CrawlManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/queue/CrawlManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/queue/ItemManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/queue/ItemManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/database/WriteManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/database/WriteManager.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -20,6 +18,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Class" />
+        <option value="Enum" />
       </list>
     </option>
   </component>
@@ -35,23 +34,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "C:/Users/Digital/Desktop/dev_archive/Crawly",
-    "settings.editor.selected.configurable": "preferences.pluginManager"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Digital/Desktop/dev_archive/Crawly&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   }
-}]]></component>
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
+      <recent name="dev.digitaldragon.database" />
+    </key>
+  </component>
   <component name="RunManager">
-    <configuration name="dev.digitaldragon.Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+    <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="dev.digitaldragon.Main" />
       <module name="Crawly_server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="dev.digitaldragon.database.mongo.*" />
+          <option name="PATTERN" value="dev.digitaldragon.database.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
@@ -61,7 +65,7 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.dev.digitaldragon.Main" />
+        <item itemvalue="Application.Main" />
       </list>
     </recent_temporary>
   </component>
@@ -77,6 +81,7 @@
       <workItem from="1682116982276" duration="2397000" />
       <workItem from="1683001092538" duration="2687000" />
       <workItem from="1683304100386" duration="27581000" />
+      <workItem from="1683430738134" duration="3480000" />
     </task>
     <task id="LOCAL-00001" summary="commit 1">
       <created>1680221779195</created>
@@ -92,7 +97,21 @@
       <option name="project" value="LOCAL" />
       <updated>1683382298140</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="so it works but turns out the queue grows FAST and mongo/my code just can't keep up.">
+      <created>1683430774310</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1683430774310</updated>
+    </task>
+    <task id="LOCAL-00004" summary="working on write cache">
+      <created>1683433088895</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1683433088895</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -112,6 +131,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="commit 1" />
     <MESSAGE value="everything is working!" />
-    <option name="LAST_COMMIT_MESSAGE" value="everything is working!" />
+    <MESSAGE value="so it works but turns out the queue grows FAST and mongo/my code just can't keep up." />
+    <MESSAGE value="working on write cache" />
+    <option name="LAST_COMMIT_MESSAGE" value="working on write cache" />
   </component>
 </project>

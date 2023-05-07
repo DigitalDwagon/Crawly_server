@@ -7,19 +7,32 @@ import dev.digitaldragon.queue.ItemManager;
 import org.bson.json.JsonObject;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import spark.Spark;
 
 import java.util.*;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static spark.Spark.*;
 
 
 public class Main {
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
+
     public static void main(String[] args) {
         MongoManager.initializeDb();
+        System.out.println("0");
 
+        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "TRACE");
+        Spark.port(1234);
+        Spark.init();
+
+        System.out.println("2");
         // Define a before filter to validate the username
         before((request, response) -> {
+            System.out.println("3");
             String username = request.queryParams("username");
             if (username == null || username.isEmpty()) {
                 response.status(400);
@@ -27,7 +40,7 @@ public class Main {
                 halt();
             }
         });
-
+        System.out.println("4");
         get("/queue", (request, response) -> {
             response.type("application/json");
             String username = request.queryParams("username");
@@ -91,6 +104,8 @@ public class Main {
 
             return new JSONObject(Map.of("status", "ok")).toString();
         });
+
+        Spark.awaitInitialization();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Flushing writes...");
