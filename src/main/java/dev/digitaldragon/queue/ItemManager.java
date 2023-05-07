@@ -5,6 +5,8 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.result.DeleteResult;
+import dev.digitaldragon.database.Database;
+import dev.digitaldragon.database.WriteManager;
 import dev.digitaldragon.database.mongo.MongoManager;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -15,48 +17,12 @@ import java.net.URISyntaxException;
 import java.sql.Time;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static com.mongodb.client.model.Filters.eq;
 
 public class ItemManager {
-    // ---------------------
-    // Submits a url to the mongo queue
-    public static void queueURL(String url, String username) {
-
-        //Yes, current shitty coding does require loading EVERY COLLECTION :(
-        MongoCollection<Document> queueCollection = MongoManager.getQueueCollection();
-        MongoCollection<Document> outCollection = MongoManager.getOutCollection();
-        MongoCollection<Document> doneCollection = MongoManager.getDoneCollection();
-        MongoCollection<Document> duplicatesCollection = MongoManager.getDuplicatesCollection();
-        MongoCollection<Document> rejectsCollection = MongoManager.getRejectsCollection();
-        MongoCollection<Document> endCollection = queueCollection; //Used to determine where a URL goes.
-        try {
-            URI uri = new URI(url);
-            if (uri.getScheme() != null && uri.getHost() != null) {
-                endCollection = queueCollection;
-            } else {
-                endCollection = rejectsCollection;
-            }
-        } catch (URISyntaxException e) {
-            endCollection = rejectsCollection;
-        } //Check if the URL is valid
-
-        //check if the URL is already in db
-        if (duplicationChecker(queueCollection, url) | duplicationChecker(doneCollection, url) | duplicationChecker(outCollection, url)) { //todo this shouldnt be like this
-            endCollection = duplicatesCollection;
-        }
-
-
-        Document document = new Document("url", url);
-        document.append("queuedAt", Time.from(Instant.now()).toString());
-        document.append("queuedBy", username);
-        endCollection.insertOne(document);
-        System.out.println("Processed: " + url + " (" + endCollection.getNamespace() + ")");
-    }
-
     public static void bulkQueueURLs(Set<String> urls, String username) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> {
@@ -118,23 +84,13 @@ public class ItemManager {
     public static void submitCrawlInfo(JSONObject data) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> {
-            MongoCollection<Document> queueCollection = MongoManager.getQueueCollection();
-            MongoCollection<Document> outCollection = MongoManager.getOutCollection();
-            MongoCollection<Document> doneCollection = MongoManager.getDoneCollection();
 
-            Document document = Document.parse(data.toString());
-            doneCollection.insertOne(document);
+            // TODO validate provided data
+            String url = data.get("url").toString();
+            WriteManager.itemAdd(Database.DONE, data);
+            WriteManager.itemRemove(Database.OUT, url);
+            WriteManager.itemRemove(Database.OUT, url);
 
-            //search for and remove from queue and out
-            Bson filter = eq("url", data.get("url"));
-            DeleteResult outResult = outCollection.deleteMany(filter);
-            DeleteResult queueResult = queueCollection.deleteMany(filter);
-            if (outResult.getDeletedCount() > 0) {
-                System.out.println("Released " + outResult.getDeletedCount() + " holds for " + data.get("url"));
-            }
-            if (queueResult.getDeletedCount() > 0) {
-                System.out.println("Removed " + queueResult.getDeletedCount() + " queue items for " + data.get("url"));
-            }
         });
     }
 

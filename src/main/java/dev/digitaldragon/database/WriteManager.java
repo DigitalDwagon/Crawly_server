@@ -1,14 +1,11 @@
 package dev.digitaldragon.database;
 
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.DeleteManyModel;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.InsertOneModel;
-import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.*;
 import dev.digitaldragon.database.mongo.MongoManager;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.bson.json.JsonObject;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +18,7 @@ public class WriteManager {
     private static List<WriteModel<Document>> duplicatesWrites = new ArrayList<>();
     private static List<WriteModel<Document>> rejectsWrites = new ArrayList<>();
 
-    public void itemAdd(Database database, JsonObject jsonObject) {
+    public static void itemAdd(Database database, JSONObject jsonObject) {
         Document document = Document.parse(jsonObject.toString());
         switch (database) {
             case QUEUE -> queueWrites.add(new InsertOneModel<>(document));
@@ -33,6 +30,29 @@ public class WriteManager {
         flush();
     }
 
+    public static void itemRemove(Database database, String url) {
+        Bson filter = Filters.eq("url", url);
+        switch (database) {
+            case QUEUE -> queueWrites.add(new DeleteOneModel<>(filter));
+            case OUT -> outWrites.add(new DeleteOneModel<>(filter));
+            case DONE -> doneWrites.add(new DeleteOneModel<>(filter));
+            case DUPLICATES -> duplicatesWrites.add(new DeleteOneModel<>(filter));
+            case REJECTS -> rejectsWrites.add(new DeleteOneModel<>(filter));
+        }
+        flush();
+    }
+
+    @Deprecated //TODO TEMPORARY METHOD WHILE SWITCHING EVERYTHING OVER
+    public static void proxyBulkWrites(Database database, List<WriteModel<Document>> writes) {
+        switch (database) {
+            case QUEUE -> queueWrites.addAll(writes);
+            case OUT -> outWrites.addAll(writes);
+            case DONE -> doneWrites.addAll(writes);
+            case DUPLICATES -> duplicatesWrites.addAll(writes);
+            case REJECTS -> rejectsWrites.addAll(writes);
+        }
+        flush();
+    }
     public static void flush(boolean force) {
         MongoCollection<Document> queueCollection = MongoManager.getQueueCollection();
         MongoCollection<Document> outCollection = MongoManager.getOutCollection();

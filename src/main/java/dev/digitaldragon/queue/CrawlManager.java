@@ -4,6 +4,8 @@ import com.mongodb.*;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.*;
 import com.mongodb.client.model.*;
+import dev.digitaldragon.database.Database;
+import dev.digitaldragon.database.WriteManager;
 import dev.digitaldragon.database.mongo.MongoManager;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -55,10 +57,10 @@ public class CrawlManager {
 
             try {
                 if (!queueOperations.isEmpty()) {
-                    queueCollection.bulkWrite(queueOperations);
+                    WriteManager.proxyBulkWrites(Database.QUEUE, queueOperations);
                 }
                 if (!outOperations.isEmpty()) {
-                    outCollection.bulkWrite(outOperations);
+                    WriteManager.proxyBulkWrites(Database.QUEUE, queueOperations);
                 }
             } catch (MongoException e) {
                 System.err.println("Error occurred while performing bulk write: " + e.getMessage());
