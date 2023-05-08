@@ -6,6 +6,7 @@ import dev.digitaldragon.database.mongo.MongoManager;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.json.JSONObject;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,6 +71,7 @@ public class WriteManager {
             MongoCollection<Document> collection = collectionList.get(i);
             if ((force || writes.size() >= 5000) && !writes.isEmpty()) {
                 collection.bulkWrite(writes);
+                LoggerFactory.getLogger(WriteManager.class).info(String.format("Flushed %s writes to %s", writes.size(), collection.getNamespace()));
                 writes.clear();
             }
         }

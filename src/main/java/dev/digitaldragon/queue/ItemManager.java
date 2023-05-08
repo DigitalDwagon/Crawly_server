@@ -50,9 +50,10 @@ public class ItemManager {
                     endDatabase = Database.DUPLICATES;
                 }
 
-                JSONObject write = new JSONObject("url", url)
-                        .append("queuedAt", Time.from(Instant.now()).toString())
-                        .append("queuedBy", username);
+                JSONObject write = new JSONObject()
+                        .put("url", url)
+                        .put("queuedAt", Time.from(Instant.now()).toString())
+                        .put("queuedBy", username);
 
                 WriteManager.itemAdd(endDatabase, write);
             }

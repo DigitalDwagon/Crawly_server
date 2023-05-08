@@ -1,5 +1,6 @@
 package dev.digitaldragon;
 
+import dev.digitaldragon.database.ReadManager;
 import dev.digitaldragon.database.WriteManager;
 import dev.digitaldragon.database.mongo.MongoManager;
 import dev.digitaldragon.queue.CrawlManager;
@@ -23,6 +24,7 @@ public class Main {
 
     public static void main(String[] args) {
         MongoManager.initializeDb();
+        ReadManager.refreshCaches(true);
 
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "TRACE");
         Spark.port(1234);
@@ -69,6 +71,16 @@ public class Main {
             return new JsonObject(Map.of("domains", CrawlManager.uniqueDomains()).toString());
         });
 
+        //TODO release user claim(s) method
+        //TODO release global claims older than date method
+
+
+        //TODO NOTE FOR WHEN I WAKE UP: working on implementing a write cache and read cache (write cache basically done but methods need updating, ReadManager still needs to be created)
+        //the goal is that we always read/write from cache and let the methods update the caches as time goes on
+        //right now WriteManager batches ~5000 writes per collection and sends them all at once to Mongo. Hopefully this + a read cache will ease load
+        //WriteManager has a temporary proxy method for the manual bulk writes being done as a temporary measure before rewriting
+        //current suspect for all the load is the deduplicater, so need to cache reads on that and maybe figure out another speed improvement (maybe search through domains first, then urls on that domain?)
+
         post("/queue", (request, response) -> {
             response.type("application/json");
             String username = request.queryParams("username");
@@ -100,6 +112,24 @@ public class Main {
             ItemManager.submitCrawlInfo(jsonObject);
 
             return new JSONObject(Map.of("status", "ok")).toString();
+        });
+
+        get("/admin/test", (request, response) -> {
+            int amount = Integer.parseInt(request.queryParams("amount"));
+
+            Set<String> urls = ReadManager.itemGetUniqueDomainUrls(10);
+
+            if (urls.isEmpty()) {
+                response.status(500);
+                return new JSONObject(Map.of("error", "queue empty or error fetching from queue")).toString();
+            }
+
+            JSONArray urlsJsonArray = new JSONArray(urls);
+
+            JSONObject responseJson = new JSONObject();
+            responseJson.put("urls", urlsJsonArray);
+
+            return responseJson;
         });
 
         Spark.awaitInitialization();
