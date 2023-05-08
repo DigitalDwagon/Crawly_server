@@ -23,44 +23,43 @@ public class ReadManager {
     public static Map<String, List<String>> doneUrlCache = new ConcurrentHashMap<>();
 
     public static Set<String> itemGetUniqueDomainUrls(int number) {
-        for (Map.Entry<String, List<String>> entry : queueUrlCache.entrySet()) {
-            System.out.println(entry.getKey());
+        refreshCaches();
+        Set<String> keySet = queueUrlCache.keySet();
+        Set<String> urls = new HashSet<>();
+        int maxRetries = number * 2;
+        int retries = 0;
 
-            for (String s : entry.getValue()) {
-                System.out.println(s);
-            }
-        }
+        while (urls.size() < number && retries < maxRetries && !keySet.isEmpty()) {
+            String randomKey = keySet.stream()
+                    .skip(ThreadLocalRandom.current().nextInt(keySet.size()))
+                    .findFirst().orElse(null);
 
-        try {
-            refreshCaches();
-            Set<String> keySet = queueUrlCache.keySet();
-            Set<String> urls = new HashSet<>();
-            int maxRetries = number * 2;
-            int retries = 0;
-
-            while (urls.size() < number && retries < maxRetries && !keySet.isEmpty()) {
-                String randomKey = keySet.stream()
-                        .skip(ThreadLocalRandom.current().nextInt(keySet.size()))
-                        .findFirst().orElse(null);
-
-                if (randomKey != null) {
-                    List<String> domainItem = queueUrlCache.get(randomKey);
-                    if (domainItem.isEmpty()) {
-                        retries++;
-                        continue;
-                    }
-                    String item = domainItem.get(0);
-                    urls.add(item);
-                    cacheRemoveItem(item, queueUrlCache);
-                    cacheAddItem(item, outUrlCache);
+            if (randomKey != null) {
+                List<String> domainItem = queueUrlCache.get(randomKey);
+                if (domainItem.isEmpty()) {
+                    retries++;
+                    continue;
                 }
-                retries++;
+                String item = domainItem.get(0);
+                urls.add(item);
+                cacheRemoveItem(item, queueUrlCache);
+                cacheAddItem(item, outUrlCache);
             }
-            return urls;
-        } catch (Exception e) {
-            e.printStackTrace();
+            retries++;
         }
-        return null;
+        return urls;
+    }
+
+    public static boolean cacheCheckDuplication(String url) {
+        String domain = CrawlManager.getDomainFromUrl(url);
+
+        if (doneUrlCache.get(domain).contains(url)) {
+            return true;
+        }
+        if (outUrlCache.get(domain).contains(url)) {
+            return true;
+        }
+        return queueUrlCache.get(domain).contains(url);
     }
 
     private static void cacheRemoveItem(String url, Map<String, List<String>> cache) {
@@ -80,6 +79,28 @@ public class ReadManager {
         cache.get(domain).add(url);
     }
 
+    private static void refreshCaches(MongoCollection<Document> collection, Map<String, List<String>> cache) {
+        System.out.printf("Rebuilding cache %s%n", collection.getNamespace());
+
+        List<String> fieldsToRetrieve = Collections.singletonList("url");
+        try (MongoCursor<Document> cursor = collection.find().projection(Projections.include(fieldsToRetrieve)).batchSize(1000).iterator()) {
+            while (cursor.hasNext()) {
+                Document document = cursor.next();
+                String url = document.get("url").toString();
+                String domain = CrawlManager.getDomainFromUrl(url);
+
+                if (!cache.containsKey(domain)) {
+                    cache.put(domain, new ArrayList<>());
+                }
+
+                cache.get(domain).add(url);
+            }
+        } catch (MongoException e) {
+            e.printStackTrace();
+        }
+        lastRefresh = Instant.now();
+        System.out.printf("Finished rebuilding cache %s%n", collection.getNamespace());
+    }
 
     public static void refreshCaches(boolean force) {
         System.out.println("Refresh method called.");
@@ -114,29 +135,6 @@ public class ReadManager {
             e.printStackTrace();
         }
 
-    }
-
-    private static void refreshCaches(MongoCollection<Document> collection, Map<String, List<String>> cache) {
-        System.out.printf("Rebuilding cache %s%n", collection.getNamespace());
-
-        List<String> fieldsToRetrieve = Collections.singletonList("url");
-        try (MongoCursor<Document> cursor = collection.find().projection(Projections.include(fieldsToRetrieve)).batchSize(1000).iterator()) {
-            while (cursor.hasNext()) {
-                Document document = cursor.next();
-                String url = document.get("url").toString();
-                String domain = CrawlManager.getDomainFromUrl(url);
-
-                if (!cache.containsKey(domain)) {
-                    cache.put(domain, new ArrayList<>());
-                }
-
-                cache.get(domain).add(url);
-            }
-        } catch (MongoException e) {
-            e.printStackTrace();
-        }
-        lastRefresh = Instant.now();
-        System.out.printf("Finished rebuilding cache %s%n", collection.getNamespace());
     }
 
     public static void refreshCaches() {
