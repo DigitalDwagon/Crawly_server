@@ -4,11 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a4b7123-3cdb-4546-91fd-a6be12d7a2f7" name="Changes" comment="remove unused class">
-      <change afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/database/ReadManager.java" afterDir="false" />
+    <list default="true" id="8a4b7123-3cdb-4546-91fd-a6be12d7a2f7" name="Changes" comment="read cache duplication checker">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/database/ReadManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/database/ReadManager.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/database/WriteManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/database/WriteManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/queue/CrawlManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/queue/CrawlManager.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/queue/ItemManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/digitaldragon/queue/ItemManager.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -27,8 +28,14 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/src/main/java/dev/digitaldragon/queue/ItemManager.java" root0="SKIP_INSPECTION" />
+  </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectId" id="2NeyAPckuMUxSKu6H69MMurd17p" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -85,7 +92,7 @@
       <workItem from="1683304100386" duration="27581000" />
       <workItem from="1683430738134" duration="3480000" />
       <workItem from="1683434250911" duration="13003000" />
-      <workItem from="1683503446974" duration="7167000" />
+      <workItem from="1683503446974" duration="18289000" />
     </task>
     <task id="LOCAL-00001" summary="commit 1">
       <created>1680221779195</created>
@@ -157,7 +164,21 @@
       <option name="project" value="LOCAL" />
       <updated>1683435760442</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="read cache works">
+      <created>1683517334074</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1683517334074</updated>
+    </task>
+    <task id="LOCAL-00012" summary="read cache duplication checker">
+      <created>1683517617639</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1683517617639</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -186,6 +207,8 @@
     <MESSAGE value="BulkQueueURLs now uses write cache" />
     <MESSAGE value="quick cleanup ItemManager.java" />
     <MESSAGE value="remove unused class" />
-    <option name="LAST_COMMIT_MESSAGE" value="remove unused class" />
+    <MESSAGE value="read cache works" />
+    <MESSAGE value="read cache duplication checker" />
+    <option name="LAST_COMMIT_MESSAGE" value="read cache duplication checker" />
   </component>
 </project>

@@ -69,7 +69,7 @@ public class WriteManager {
         for (int i = 0; i < writeLists.size(); i++) {
             List<WriteModel<Document>> writes = writeLists.get(i);
             MongoCollection<Document> collection = collectionList.get(i);
-            if ((force || writes.size() >= 5000) && !writes.isEmpty()) {
+            if ((force || writes.size() >= 1000) && !writes.isEmpty()) {
                 collection.bulkWrite(writes);
                 LoggerFactory.getLogger(WriteManager.class).info(String.format("Flushed %s writes to %s", writes.size(), collection.getNamespace()));
                 writes.clear();

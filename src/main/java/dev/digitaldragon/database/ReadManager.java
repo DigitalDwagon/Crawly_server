@@ -42,8 +42,6 @@ public class ReadManager {
                 }
                 String item = domainItem.get(0);
                 urls.add(item);
-                cacheRemoveItem(item, queueUrlCache);
-                cacheAddItem(item, outUrlCache);
             }
             retries++;
         }
@@ -62,7 +60,7 @@ public class ReadManager {
         return queueUrlCache.get(domain).contains(url);
     }
 
-    private static void cacheRemoveItem(String url, Map<String, List<String>> cache) {
+    public static void cacheRemoveItem(String url, Map<String, List<String>> cache) {
         String domain = CrawlManager.getDomainFromUrl(url);
         cache.get(domain).remove(url);
         if (cache.get(domain).isEmpty()) {
@@ -70,7 +68,7 @@ public class ReadManager {
         }
     }
 
-    private static void cacheAddItem(String url, Map<String, List<String>> cache) {
+    public static void cacheAddItem(String url, Map<String, List<String>> cache) {
         String domain = CrawlManager.getDomainFromUrl(url);
         if (!cache.containsKey(domain)) {
             cache.put(domain, new ArrayList<>());
@@ -78,6 +76,24 @@ public class ReadManager {
 
         cache.get(domain).add(url);
     }
+
+    public static void cacheAddItem(String url, Database database) {
+        switch (database) {
+            case QUEUE -> cacheAddItem(url, queueUrlCache);
+            case OUT -> cacheAddItem(url, outUrlCache);
+            case DONE -> cacheAddItem(url, doneUrlCache);
+        }
+    }
+
+    public static void cacheRemoveItem(String url, Database database) {
+        switch (database) {
+            case QUEUE -> cacheRemoveItem(url, queueUrlCache);
+            case OUT -> cacheRemoveItem(url, outUrlCache);
+            case DONE -> cacheRemoveItem(url, doneUrlCache);
+        }
+    }
+
+
 
     private static void refreshCaches(MongoCollection<Document> collection, Map<String, List<String>> cache) {
         System.out.printf("Rebuilding cache %s%n", collection.getNamespace());
@@ -103,18 +119,16 @@ public class ReadManager {
     }
 
     public static void refreshCaches(boolean force) {
-        System.out.println("Refresh method called.");
         Instant now = Instant.now();
-        Instant time15MinAgo = now.minus(10, ChronoUnit.MINUTES);
+            Instant time15MinAgo = now.minus(10, ChronoUnit.MINUTES);
         if (!lastRefresh.isBefore(Instant.from(time15MinAgo)) && !force) {
-            System.out.println("Refresh failed, not needed");
             return;
         }
-        System.out.println("Refreshing...");
+        System.out.println("Refreshing read caches...");
         MongoCollection<Document> queueCollection = MongoManager.getQueueCollection();
         MongoCollection<Document> outCollection = MongoManager.getOutCollection();
         MongoCollection<Document> doneCollection = MongoManager.getDoneCollection();
-        ExecutorService executor = Executors.newFixedThreadPool(3);
+        ExecutorService executor = Executors.newFixedThreadPool(1);
 
         executor.submit(() -> {
             refreshCaches(queueCollection, queueUrlCache);

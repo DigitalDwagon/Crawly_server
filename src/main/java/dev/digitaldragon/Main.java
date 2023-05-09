@@ -8,19 +8,15 @@ import dev.digitaldragon.queue.ItemManager;
 import org.bson.json.JsonObject;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Spark;
 
 import java.util.*;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static spark.Spark.*;
 
 
 public class Main {
-    private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
         MongoManager.initializeDb();
@@ -67,19 +63,10 @@ public class Main {
             return responseJson.toString();
         });
 
-        get("/queue/domains", (request, response) -> {
-            return new JsonObject(Map.of("domains", CrawlManager.uniqueDomains()).toString());
-        });
+        get("/queue/domains", (request, response) -> new JsonObject(Map.of("domains", CrawlManager.uniqueDomains()).toString()));
 
         //TODO release user claim(s) method
         //TODO release global claims older than date method
-
-
-        //TODO NOTE FOR WHEN I WAKE UP: working on implementing a write cache and read cache (write cache basically done but methods need updating, ReadManager still needs to be created)
-        //the goal is that we always read/write from cache and let the methods update the caches as time goes on
-        //right now WriteManager batches ~5000 writes per collection and sends them all at once to Mongo. Hopefully this + a read cache will ease load
-        //WriteManager has a temporary proxy method for the manual bulk writes being done as a temporary measure before rewriting
-        //current suspect for all the load is the deduplicater, so need to cache reads on that and maybe figure out another speed improvement (maybe search through domains first, then urls on that domain?)
 
         post("/queue", (request, response) -> {
             response.type("application/json");
@@ -117,7 +104,7 @@ public class Main {
         get("/admin/test", (request, response) -> {
             int amount = Integer.parseInt(request.queryParams("amount"));
 
-            Set<String> urls = ReadManager.itemGetUniqueDomainUrls(10);
+            Set<String> urls = ReadManager.itemGetUniqueDomainUrls(amount);
 
             if (urls.isEmpty()) {
                 response.status(500);
@@ -139,5 +126,11 @@ public class Main {
             WriteManager.flush(true);
             System.out.println("Writes flushed.");
         }));
+
+        post("/admin/cacheupdate", (request, response) -> {
+            WriteManager.flush(true);
+            ReadManager.refreshCaches(true);
+            return new JSONObject(Map.of("success", "true")).toString();
+        });
     }
 }

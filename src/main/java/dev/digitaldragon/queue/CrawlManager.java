@@ -5,10 +5,12 @@ import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.*;
 import com.mongodb.client.model.*;
 import dev.digitaldragon.database.Database;
+import dev.digitaldragon.database.ReadManager;
 import dev.digitaldragon.database.WriteManager;
 import dev.digitaldragon.database.mongo.MongoManager;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.json.JSONObject;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -16,56 +18,33 @@ import java.time.Instant;
 import java.util.*;
 
 public class CrawlManager {
-
     public static List<String> getUniqueDomainUrls(int numUrls, String user) { //TODO rewrite to use read and write caches
-        MongoCollection<Document> queueCollection = MongoManager.getQueueCollection();
-        MongoCollection<Document> outCollection = MongoManager.getOutCollection();
-
         Set<String> uniqueDomains = new HashSet<>();
         List<String> urls = new ArrayList<>();
 
-        int maxRetries = 10; // maximum number of retries
+        int maxRetries = 150; // maximum number of retries
         int retries = 0;
 
         while (urls.size() < numUrls && retries < maxRetries) {
             int fetchSize = Math.min(numUrls - urls.size(), 1000); // fetch up to 1000 documents at a time
-            List<Document> documents = queueCollection.aggregate(Arrays.asList(
-                    Aggregates.sample(fetchSize)
-            )).into(new ArrayList<>());
+            Set<String> items = ReadManager.itemGetUniqueDomainUrls(fetchSize);
 
-            if (documents.isEmpty()) {
-                break;
-            }
-
-            List<WriteModel<Document>> queueOperations = new ArrayList<>();
-            List<WriteModel<Document>> outOperations = new ArrayList<>();
-
-            for (Document document : documents) {
-                String url = document.getString("url");
+            for (String url : items) {
                 String domain = getDomainFromUrl(url);
 
                 if (!uniqueDomains.contains(domain)) {
                     urls.add(url);
                     uniqueDomains.add(domain);
-                    queueOperations.add(new DeleteOneModel<>(document));
-                    document.append("claimedBy", user);
-                    document.append("claimedAt", Instant.now().toString());
-                    document.remove("_id");
-                    outOperations.add(new InsertOneModel<>(document));
+                    ReadManager.cacheAddItem(url, Database.OUT);
+                    ReadManager.cacheRemoveItem(url, Database.QUEUE);
+                    WriteManager.itemRemove(Database.QUEUE, url);
+                    JSONObject jsonObject = new JSONObject()
+                            .put("url", url)
+                            .put("claimedBy", user)
+                            .put("claimedAt", Instant.now().toString());
+                    WriteManager.itemAdd(Database.OUT, jsonObject);
                 }
             }
-
-            try {
-                if (!queueOperations.isEmpty()) {
-                    WriteManager.proxyBulkWrites(Database.QUEUE, queueOperations);
-                }
-                if (!outOperations.isEmpty()) {
-                    WriteManager.proxyBulkWrites(Database.QUEUE, queueOperations);
-                }
-            } catch (MongoException e) {
-                System.err.println("Error occurred while performing bulk write: " + e.getMessage());
-            }
-
             retries++;
         }
 

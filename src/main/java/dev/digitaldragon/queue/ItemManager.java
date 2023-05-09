@@ -6,6 +6,7 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.result.DeleteResult;
 import dev.digitaldragon.database.Database;
+import dev.digitaldragon.database.ReadManager;
 import dev.digitaldragon.database.WriteManager;
 import dev.digitaldragon.database.mongo.MongoManager;
 import org.bson.Document;
@@ -68,6 +69,36 @@ public class ItemManager {
         });
     }
 
+    public static void newBulkQueueURLs(Set<String> urls, String username) { //TODO read cache
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.submit(() -> {
+            for (String url : urls) {
+                Database endDatabase = Database.REJECTS;
+
+                try {
+                    URI uri = new URI(url);
+                    if (uri.getScheme() != null && uri.getHost() != null) {
+                        endDatabase = Database.QUEUE;
+                    }
+                } catch (URISyntaxException e) {
+                    //do nothing, already assigned as a reject
+                }
+
+
+                if (ReadManager.cacheCheckDuplication(url)) {
+                    endDatabase = Database.DUPLICATES;
+                }
+
+                JSONObject write = new JSONObject()
+                        .put("url", url)
+                        .put("queuedAt", Time.from(Instant.now()).toString())
+                        .put("queuedBy", username);
+
+                WriteManager.itemAdd(endDatabase, write);
+            }
+        });
+    }
+
      // ---------------------
      // Duplication Checker
      // check if a record for this url already exists
@@ -83,6 +114,7 @@ public class ItemManager {
     public static void submitCrawlInfo(JSONObject data) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> {
+            data.put("submittedAt", Instant.now());
 
             // TODO validate provided data
             String url = data.get("url").toString();
