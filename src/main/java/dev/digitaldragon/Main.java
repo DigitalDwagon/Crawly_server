@@ -22,9 +22,20 @@ public class Main {
         MongoManager.initializeDb();
         ReadManager.refreshCaches(true);
 
+
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "TRACE");
-        Spark.port(1234);
-        Spark.init();
+        Spark.port(443);
+        try {
+            //secure("C:\\Users\\Digital\\Desktop\\dev_archive\\Crawly_server\\certs\\cert.pem", "C:\\Users\\Digital\\Desktop\\dev_archive\\Crawly_server\\certs\\privkey.key", null, null);
+            Spark.init();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+        get("/.well-known/acme-challenge/U4jZOD7td8ZTRwgp1Z6skizUgoZFQRVn46sN-mY5RgQ", (request, response) -> {
+            return "U4jZOD7td8ZTRwgp1Z6skizUgoZFQRVn46sN-mY5RgQ.bpJoExtDbf0sv1LhnGRBwh05tWQX8McztNTgwE-rUhI";
+        });
 
         // Define a before filter to validate the username
         before("/queue", (request, response) -> {
@@ -81,7 +92,7 @@ public class Main {
         });
 
 
-        post("/submit", (request, response) -> {
+        post("/jobs/submit", (request, response) -> {
             response.type("application/json");
 
 
@@ -99,6 +110,16 @@ public class Main {
             ItemManager.submitCrawlInfo(jsonObject);
 
             return new JSONObject(Map.of("status", "ok")).toString();
+        });
+
+        post("/jobs/abort", (request, response) -> {
+            response.type("application/json");
+
+            JSONObject jsonObject = new JSONObject(request.body());
+            String url = jsonObject.get("url").toString();
+
+            //todo finish this
+            return null;
         });
 
         get("/admin/test", (request, response) -> {

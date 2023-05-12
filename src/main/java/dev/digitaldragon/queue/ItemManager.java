@@ -47,7 +47,7 @@ public class ItemManager {
                 }
 
 
-                if (duplicationChecker(doneCollection, url) || duplicationChecker(outCollection, url) || duplicationChecker(queueCollection, url)) {
+                if (ReadManager.cacheCheckDuplication(url)) {
                     endDatabase = Database.DUPLICATES;
                 }
 

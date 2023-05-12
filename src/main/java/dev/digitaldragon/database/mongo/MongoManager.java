@@ -25,10 +25,6 @@ public class MongoManager {
     private static MongoCollection<Document> duplicatesCollection;
     @Getter
     private static MongoCollection<Document> queueCollection;
-    private static final String username = "nessiebot",
-            password = "tRMtsVUgLbv2asyRYcQBH3fa76TSwNrUT373Hb5tA9FuwGrjWNp9cbkstpTTsU6xPZdsbHVmGfVmmzGG9CxbhxS3nUCAAhGGXghJpQdDUKgUvhKM6mVWN2Qph9mwQs72",
-            host = "localhost",
-            port = "27017";
     @Getter
     private static MongoClient mongoClient;
     public MongoManager() {
