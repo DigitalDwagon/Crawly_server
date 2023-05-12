@@ -32,11 +32,6 @@ public class Main {
             e.printStackTrace();
         }
 
-
-        get("/.well-known/acme-challenge/U4jZOD7td8ZTRwgp1Z6skizUgoZFQRVn46sN-mY5RgQ", (request, response) -> {
-            return "U4jZOD7td8ZTRwgp1Z6skizUgoZFQRVn46sN-mY5RgQ.bpJoExtDbf0sv1LhnGRBwh05tWQX8McztNTgwE-rUhI";
-        });
-
         // Define a before filter to validate the username
         before("/queue", (request, response) -> {
             String username = request.queryParams("username");
