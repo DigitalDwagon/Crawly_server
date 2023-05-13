@@ -26,6 +26,10 @@ public class MongoManager {
     @Getter
     private static MongoCollection<Document> queueCollection;
     @Getter
+    private static MongoCollection<Document> bigqueueCollection;
+    @Getter
+    private static MongoCollection<Document> processingCollection;
+    @Getter
     private static MongoClient mongoClient;
     public MongoManager() {
         instance = this;
@@ -36,9 +40,12 @@ public class MongoManager {
         database = mongoClient.getDatabase("crawly");
         doneCollection = database.getCollection("done");
         outCollection = database.getCollection("out");
+        processingCollection = database.getCollection("processing");
+        bigqueueCollection = database.getCollection("bigqueue");
         queueCollection = database.getCollection("queue");
         rejectsCollection = database.getCollection("rejects");
         duplicatesCollection = database.getCollection("duplicates");
+
     }
 
 }

@@ -13,6 +13,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class WriteManager {
+    private static List<WriteModel<Document>> processingWrites = new ArrayList<>();
+    private static List<WriteModel<Document>> bigqueueWrites = new ArrayList<>();
     private static List<WriteModel<Document>> queueWrites = new ArrayList<>();
     private static List<WriteModel<Document>> outWrites = new ArrayList<>();
     private static List<WriteModel<Document>> doneWrites = new ArrayList<>();
@@ -22,6 +24,8 @@ public class WriteManager {
     public static void itemAdd(Database database, JSONObject jsonObject) {
         Document document = Document.parse(jsonObject.toString());
         switch (database) {
+            case PROCESSING -> processingWrites.add(new InsertOneModel<>(document));
+            case BIGQUEUE -> bigqueueWrites.add(new InsertOneModel<>(document));
             case QUEUE -> queueWrites.add(new InsertOneModel<>(document));
             case OUT -> outWrites.add(new InsertOneModel<>(document));
             case DONE -> doneWrites.add(new InsertOneModel<>(document));
@@ -34,6 +38,8 @@ public class WriteManager {
     public static void itemRemove(Database database, String url) {
         Bson filter = Filters.eq("url", url);
         switch (database) {
+            case PROCESSING -> processingWrites.add(new DeleteOneModel<>(filter));
+            case BIGQUEUE -> bigqueueWrites.add(new DeleteOneModel<>(filter));
             case QUEUE -> queueWrites.add(new DeleteOneModel<>(filter));
             case OUT -> outWrites.add(new DeleteOneModel<>(filter));
             case DONE -> doneWrites.add(new DeleteOneModel<>(filter));
@@ -46,6 +52,8 @@ public class WriteManager {
     @Deprecated //TODO TEMPORARY METHOD WHILE SWITCHING EVERYTHING OVER
     public static void proxyBulkWrites(Database database, List<WriteModel<Document>> writes) {
         switch (database) {
+            case PROCESSING -> processingWrites.addAll(writes);
+            case BIGQUEUE -> bigqueueWrites.addAll(writes);
             case QUEUE -> queueWrites.addAll(writes);
             case OUT -> outWrites.addAll(writes);
             case DONE -> doneWrites.addAll(writes);
@@ -55,6 +63,8 @@ public class WriteManager {
         flush();
     }
     public static void flush(boolean force) {
+        MongoCollection<Document> processingCollection = MongoManager.getProcessingCollection();
+        MongoCollection<Document> bigqueueCollection = MongoManager.getBigqueueCollection();
         MongoCollection<Document> queueCollection = MongoManager.getQueueCollection();
         MongoCollection<Document> outCollection = MongoManager.getOutCollection();
         MongoCollection<Document> doneCollection = MongoManager.getDoneCollection();
@@ -62,9 +72,9 @@ public class WriteManager {
         MongoCollection<Document> rejectsCollection = MongoManager.getRejectsCollection();
 
         List<List<WriteModel<Document>>> writeLists = Arrays.asList(
-                queueWrites, outWrites, doneWrites, duplicatesWrites, rejectsWrites);
+                processingWrites, bigqueueWrites, queueWrites, outWrites, doneWrites, duplicatesWrites, rejectsWrites);
         List<MongoCollection<Document>> collectionList = Arrays.asList(
-                queueCollection, outCollection, doneCollection, duplicatesCollection, rejectsCollection);
+                processingCollection, bigqueueCollection, queueCollection, outCollection, doneCollection, duplicatesCollection, rejectsCollection);
 
         for (int i = 0; i < writeLists.size(); i++) {
             List<WriteModel<Document>> writes = writeLists.get(i);

@@ -27,13 +27,7 @@ public class ItemManager {
     public static void bulkQueueURLs(Set<String> urls, String username) { //TODO read cache
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> {
-            // Load all necessary collections
-            MongoCollection<Document> queueCollection = MongoManager.getQueueCollection();
-            MongoCollection<Document> outCollection = MongoManager.getOutCollection();
-            MongoCollection<Document> doneCollection = MongoManager.getDoneCollection();
-
             // Group URLs by collection to which they belong
-            Map<MongoCollection<Document>, List<Document>> documentsByCollection = new HashMap<>();
             for (String url : urls) {
                 Database endDatabase = Database.REJECTS;
 
@@ -57,14 +51,6 @@ public class ItemManager {
                         .put("queuedBy", username);
 
                 WriteManager.itemAdd(endDatabase, write);
-            }
-
-            // Perform bulk writes for each collection
-            for (Map.Entry<MongoCollection<Document>, List<Document>> entry : documentsByCollection.entrySet()) {
-                MongoCollection<Document> collection = entry.getKey();
-                List<Document> documents = entry.getValue();
-                collection.insertMany(documents);
-                System.out.println("Processed " + documents.size() + " URLs in " + collection.getNamespace());
             }
         });
     }
