@@ -27,20 +27,20 @@ public class ItemManager {
     public static void bulkQueueURLs(Set<String> urls, String username) { //TODO read cache
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> {
-            // Group URLs by collection to which they belong
             for (String url : urls) {
+                // Quick filtering for absolute garbage
                 Database endDatabase = Database.REJECTS;
-
                 try {
                     URI uri = new URI(url);
-                    if (uri.getScheme() != null && uri.getHost() != null) {
-                        endDatabase = Database.QUEUE;
+                    if (uri.getScheme() == null || uri.getHost() == null) {
+                        continue;
                     }
+                    endDatabase = Database.PROCESSING;
                 } catch (URISyntaxException e) {
                     //do nothing, already assigned as a reject
                 }
 
-
+                // Quick duplication check
                 if (ReadManager.cacheCheckDuplication(url)) {
                     endDatabase = Database.DUPLICATES;
                 }
@@ -54,48 +54,6 @@ public class ItemManager {
             }
         });
     }
-
-    public static void newBulkQueueURLs(Set<String> urls, String username) { //TODO read cache
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> {
-            for (String url : urls) {
-                Database endDatabase = Database.REJECTS;
-
-                try {
-                    URI uri = new URI(url);
-                    if (uri.getScheme() != null && uri.getHost() != null) {
-                        endDatabase = Database.QUEUE;
-                    }
-                } catch (URISyntaxException e) {
-                    //do nothing, already assigned as a reject
-                }
-
-
-                if (ReadManager.cacheCheckDuplication(url)) {
-                    endDatabase = Database.DUPLICATES;
-                }
-
-                JSONObject write = new JSONObject()
-                        .put("url", url)
-                        .put("queuedAt", Time.from(Instant.now()).toString())
-                        .put("queuedBy", username);
-
-                WriteManager.itemAdd(endDatabase, write);
-            }
-        });
-    }
-
-     // ---------------------
-     // Duplication Checker
-     // check if a record for this url already exists
-     // ---------------------
-     // todo does not account for same urls with or without ending / (eg https://example.com/ is not treated the same as https://example.com)
-     private static boolean duplicationChecker(MongoCollection<Document> collection, String url) { //TODO read cache
-         Bson filter = Filters.eq("url", url);
-         try (MongoCursor<Document> cursor = collection.find(filter).iterator()) {
-             return cursor.hasNext();
-         }
-     }
 
     public static void submitCrawlInfo(JSONObject data) {
         ExecutorService executor = Executors.newSingleThreadExecutor();

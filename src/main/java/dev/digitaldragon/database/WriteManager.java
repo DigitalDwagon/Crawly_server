@@ -1,5 +1,7 @@
 package dev.digitaldragon.database;
 
+import com.mongodb.MongoWriteException;
+import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
 import dev.digitaldragon.database.mongo.MongoManager;
@@ -80,7 +82,7 @@ public class WriteManager {
             List<WriteModel<Document>> writes = writeLists.get(i);
             MongoCollection<Document> collection = collectionList.get(i);
             if ((force || writes.size() >= 1000) && !writes.isEmpty()) {
-                collection.bulkWrite(writes);
+                collection.bulkWrite(writes, new BulkWriteOptions().ordered(false));
                 LoggerFactory.getLogger(WriteManager.class).info(String.format("Flushed %s writes to %s", writes.size(), collection.getNamespace()));
                 writes.clear();
             }
