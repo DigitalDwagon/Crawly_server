@@ -62,6 +62,7 @@ public class ItemManager {
 
             // TODO validate provided data
             String url = data.get("url").toString();
+            data.remove("_id");
             WriteManager.itemAdd(Database.DONE, data);
             WriteManager.itemRemove(Database.QUEUE, url);
             WriteManager.itemRemove(Database.OUT, url);

@@ -103,7 +103,7 @@ public class CrawlManager {
                 }
             }
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            //do nothing lol
         }
         return null;
     }

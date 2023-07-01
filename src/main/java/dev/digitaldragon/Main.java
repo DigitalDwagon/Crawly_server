@@ -3,6 +3,9 @@ package dev.digitaldragon;
 import dev.digitaldragon.database.ReadManager;
 import dev.digitaldragon.database.WriteManager;
 import dev.digitaldragon.database.mongo.MongoManager;
+import dev.digitaldragon.queue.Processor;
+import dev.digitaldragon.database.mongo.QueueMover;
+import dev.digitaldragon.database.mongo.UrlsExporter;
 import dev.digitaldragon.queue.CrawlManager;
 import dev.digitaldragon.queue.ItemManager;
 import org.bson.json.JsonObject;
@@ -91,6 +94,16 @@ public class Main {
             return new JSONObject(Map.of("success", true)).toString();
         });
 
+        post("/queue/move", (request, response) -> {
+            response.type("application/json");
+            String username = request.queryParams("username");
+
+            JSONObject jsonObject = new JSONObject(request.body());
+            QueueMover.move(jsonObject.getInt("amount"));
+
+            return new JSONObject(Map.of("success", true)).toString();
+        });
+
 
         post("/jobs/submit", (request, response) -> {
             response.type("application/json");
@@ -105,6 +118,11 @@ public class Main {
             Set<String> urls = discovered.toList().stream().map(Object::toString).collect(Collectors.toSet());
             System.out.printf("Sending %s items for deduplication and queuing%n", urls.size());
             ItemManager.bulkQueueURLs(urls, crawlerUsername);
+
+            if (jsonObject.get("ip") != null) {
+                jsonObject.put("reported_ip", jsonObject.get("ip"));
+            }
+            jsonObject.put("ip", request.ip());
 
             // submit finished url to done
             ItemManager.submitCrawlInfo(jsonObject);
@@ -140,6 +158,16 @@ public class Main {
             return responseJson;
         });
 
+        get("/whoami", (request, response) -> {
+            for (String s : request.headers()) {
+                System.out.println(s);
+            }
+            JSONObject responseJson = new JSONObject();
+            responseJson.put("success", "true");
+
+            return responseJson;
+        });
+
         Spark.awaitInitialization();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -153,5 +181,18 @@ public class Main {
             ReadManager.refreshCaches(true);
             return new JSONObject(Map.of("success", "true")).toString();
         });
+
+        post("/admin/export", ((request, response) -> {
+            UrlsExporter.export(List.of(
+                    MongoManager.getBigqueueCollection(),
+                    MongoManager.getDoneCollection(),
+                    MongoManager.getOutCollection(),
+                    MongoManager.getDuplicatesCollection(),
+                    MongoManager.getQueueCollection(),
+                    MongoManager.getProcessingCollection(),
+                    MongoManager.getRejectsCollection()
+            ));
+            return new JSONObject(Map.of("success", "true")).toString();
+        }));
     }
 }

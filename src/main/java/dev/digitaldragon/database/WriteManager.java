@@ -25,12 +25,13 @@ public class WriteManager {
 
     public static void itemAdd(Database database, JSONObject jsonObject) {
         Document document = Document.parse(jsonObject.toString());
+        document.remove("_id");
         switch (database) {
             case PROCESSING -> processingWrites.add(new InsertOneModel<>(document));
             case BIGQUEUE -> bigqueueWrites.add(new InsertOneModel<>(document));
             case QUEUE -> queueWrites.add(new InsertOneModel<>(document));
             case OUT -> outWrites.add(new InsertOneModel<>(document));
-            case DONE -> doneWrites.add(new InsertOneModel<>(document));
+            case DONE -> MongoManager.getDoneCollection().insertOne(document);
             case DUPLICATES -> duplicatesWrites.add(new InsertOneModel<>(document));
             case REJECTS -> rejectsWrites.add(new InsertOneModel<>(document));
         }

@@ -48,8 +48,21 @@ public class ReadManager {
         return urls;
     }
 
+    public static String queueGetUrl() {
+        refreshCaches();
+
+        Set<String> keySet = queueUrlCache.keySet();
+        return keySet.stream()
+                .skip(ThreadLocalRandom.current().nextInt(keySet.size()))
+                .findFirst().orElse(null);
+    }
+
     public static boolean cacheCheckDuplication(String url) {
         String domain = CrawlManager.getDomainFromUrl(url);
+
+        if (domain == null) {
+            return false;
+        }
 
         if (doneUrlCache.get(domain).contains(url)) {
             return true;
@@ -97,10 +110,11 @@ public class ReadManager {
 
     private static void refreshCaches(MongoCollection<Document> collection, Map<String, List<String>> cache) {
         System.out.printf("Rebuilding cache %s%n", collection.getNamespace());
+        cache.clear();
 
         List<String> fieldsToRetrieve = Collections.singletonList("url");
         try (MongoCursor<Document> cursor = collection.find().projection(Projections.include(fieldsToRetrieve)).batchSize(1000).iterator()) {
-            while (cursor.hasNext()) {
+            while (cursor.hasNext() && cache.size() < 20000) {
                 Document document = cursor.next();
                 String url = document.get("url").toString();
                 String domain = CrawlManager.getDomainFromUrl(url);
