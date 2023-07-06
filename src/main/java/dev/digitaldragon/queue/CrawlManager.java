@@ -1,49 +1,38 @@
 package dev.digitaldragon.queue;
 
-import com.mongodb.*;
-import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.client.*;
-import com.mongodb.client.model.*;
-import dev.digitaldragon.database.Database;
+import com.mongodb.client.MongoCollection;
 import dev.digitaldragon.database.ReadManager;
 import dev.digitaldragon.database.WriteManager;
 import dev.digitaldragon.database.mongo.MongoManager;
 import org.bson.Document;
-import org.bson.conversions.Bson;
-import org.json.JSONObject;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class CrawlManager {
-    public static List<String> getUniqueDomainUrls(int numUrls, String user) { //TODO rewrite to use read and write caches
+    public static List<String> getUniqueDomainUrls(int numUrls, String username) { //TODO rewrite to use read and write caches
         Set<String> uniqueDomains = new HashSet<>();
         List<String> urls = new ArrayList<>();
 
-        int maxRetries = 150; // maximum number of retries
+        int maxRetries = numUrls * 3; // maximum number of retries
         int retries = 0;
 
         while (urls.size() < numUrls && retries < maxRetries) {
-            int fetchSize = Math.min(numUrls - urls.size(), 1000); // fetch up to 1000 documents at a time
-            Set<String> items = ReadManager.itemGetUniqueDomainUrls(fetchSize);
+            String url = ReadManager.queueGetUrl();
+            if (url == null) {
+                retries++;
+                continue;
+            }
+            String domain = getDomainFromUrl(url);
 
-            for (String url : items) {
-                String domain = getDomainFromUrl(url);
-
-                if (!uniqueDomains.contains(domain)) {
-                    urls.add(url);
-                    uniqueDomains.add(domain);
-                    ReadManager.cacheAddItem(url, Database.OUT);
-                    ReadManager.cacheRemoveItem(url, Database.QUEUE);
-                    WriteManager.itemRemove(Database.QUEUE, url);
-                    JSONObject jsonObject = new JSONObject()
-                            .put("url", url)
-                            .put("claimedBy", user)
-                            .put("claimedAt", Instant.now().toString());
-                    WriteManager.itemAdd(Database.OUT, jsonObject);
-                }
+            if (!uniqueDomains.contains(domain)) {
+                urls.add(url);
+                uniqueDomains.add(domain);
+                WriteManager.checkoutQueueItem(username, url);
             }
             retries++;
         }
@@ -57,8 +46,8 @@ public class CrawlManager {
         return urls;
     }
 
-    public static long uniqueDomains() {
-        MongoCollection<Document> collection = MongoManager.getQueueCollection();
+    public static Set<String> queueUniqueDomains() {
+        MongoCollection<Document> collection = MongoManager.getQueueCollection(); //todo also count bigqueue
         long totalDocuments = collection.countDocuments();
         int batchSize = 50;
 
@@ -83,7 +72,7 @@ public class CrawlManager {
             System.out.println(domain);
         }
 
-        return uniqueDomains.size();
+        return uniqueDomains;
     }
 
 
@@ -102,7 +91,7 @@ public class CrawlManager {
                     return parts[parts.length - 2] + "." + parts[parts.length - 1];
                 }
             }
-        } catch (URISyntaxException e) {
+        } catch (URISyntaxException | NullPointerException e) {
             //do nothing lol
         }
         return null;

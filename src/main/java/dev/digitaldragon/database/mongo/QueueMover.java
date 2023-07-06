@@ -3,17 +3,7 @@ package dev.digitaldragon.database.mongo;
 import com.mongodb.MongoWriteException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import dev.digitaldragon.database.Database;
-import dev.digitaldragon.database.ReadManager;
-import dev.digitaldragon.database.WriteManager;
 import org.bson.Document;
-import org.json.JSONObject;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class QueueMover {
     public static void move(int amount) {

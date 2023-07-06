@@ -3,25 +3,23 @@ package dev.digitaldragon.queue;
 import com.google.common.util.concurrent.RateLimiter;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
+import dev.digitaldragon.database.Database;
+import dev.digitaldragon.database.WriteManager;
 import dev.digitaldragon.database.mongo.MongoManager;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.time.Instant;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Processor {
-    private static final String URL_FILE_PATH = "asasasas.txt";
     private static Map<String, Boolean> dnsCache = new HashMap<>(); // DNS cache
 
 
@@ -31,10 +29,11 @@ public class Processor {
         MongoCollection<Document> bigQueueCollection = MongoManager.getBigqueueCollection();
         MongoCollection<Document> processingCollection = MongoManager.getProcessingCollection();
 
-        while (processingCollection.countDocuments() > 0) {
-            if (bigQueueCollection.countDocuments() > 500000) {
+        while (true) {
+            if (bigQueueCollection.countDocuments() > 500000 || processingCollection.countDocuments() < 1) {
                 continue;
             }
+
 
             try (MongoCursor<Document> cursor = processingCollection.aggregate(
                     List.of(new Document("$sample", new Document("size", 1)))).iterator()) {
@@ -45,9 +44,13 @@ public class Processor {
 
                     Document document = cursor.next();
                     String url = document.get("url").toString();
+                    WriteManager.itemRemove(Database.PROCESSING, url);
 
+
+                System.out.println("Processing: " + url); //todo logging print
                 if (isDuplicate(url, bigQueueCollection) || isDuplicate(url, rejectsCollection)) {
                     document.append("reject_reason", "DUPLICATE");
+                    System.out.println("rejected for duplicate: " + url); //todo logging print
                 } else if (!isValidURL(url)) {
                     document.append("reject_reason", "INVALID_URL");
                 } else if (!hasValidDNS(url, rateLimiter)) {

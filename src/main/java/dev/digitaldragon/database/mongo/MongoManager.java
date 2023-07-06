@@ -30,6 +30,8 @@ public class MongoManager {
     @Getter
     private static MongoCollection<Document> processingCollection;
     @Getter
+    private static MongoCollection<Document> dnsCacheCollection;
+    @Getter
     private static MongoClient mongoClient;
     public MongoManager() {
         instance = this;
@@ -45,6 +47,7 @@ public class MongoManager {
         queueCollection = database.getCollection("queue");
         rejectsCollection = database.getCollection("rejects");
         duplicatesCollection = database.getCollection("duplicates");
+        dnsCacheCollection = database.getCollection("dnscache");
 
     }
 

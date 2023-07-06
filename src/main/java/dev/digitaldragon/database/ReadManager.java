@@ -7,12 +7,8 @@ import com.mongodb.client.model.Projections;
 import dev.digitaldragon.database.mongo.MongoManager;
 import dev.digitaldragon.queue.CrawlManager;
 import org.bson.Document;
-import org.slf4j.LoggerFactory;
 
-import java.sql.Time;
 import java.time.Instant;
-import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -52,9 +48,19 @@ public class ReadManager {
         refreshCaches();
 
         Set<String> keySet = queueUrlCache.keySet();
-        return keySet.stream()
-                .skip(ThreadLocalRandom.current().nextInt(keySet.size()))
-                .findFirst().orElse(null);
+        try {
+            String randomKey = keySet.stream()
+                    .skip(ThreadLocalRandom.current().nextInt(keySet.size()))
+                    .findFirst().orElse(null);
+            if (randomKey != null) {
+                String url = queueUrlCache.get(randomKey).get(ThreadLocalRandom.current().nextInt(queueUrlCache.get(randomKey).size()));
+                cacheRemoveItem(url, queueUrlCache);
+                return url;
+            }
+        } catch (IllegalArgumentException exception) {
+            //uh oh;
+        }
+        return null;
     }
 
     public static boolean cacheCheckDuplication(String url) {
@@ -75,6 +81,9 @@ public class ReadManager {
 
     public static void cacheRemoveItem(String url, Map<String, List<String>> cache) {
         String domain = CrawlManager.getDomainFromUrl(url);
+        if (domain == null) {
+            return;
+        }
         cache.get(domain).remove(url);
         if (cache.get(domain).isEmpty()) {
             cache.remove(domain);
@@ -109,51 +118,52 @@ public class ReadManager {
 
 
     private static void refreshCaches(MongoCollection<Document> collection, Map<String, List<String>> cache) {
-        System.out.printf("Rebuilding cache %s%n", collection.getNamespace());
+
         cache.clear();
 
-        List<String> fieldsToRetrieve = Collections.singletonList("url");
-        try (MongoCursor<Document> cursor = collection.find().projection(Projections.include(fieldsToRetrieve)).batchSize(1000).iterator()) {
-            while (cursor.hasNext() && cache.size() < 20000) {
-                Document document = cursor.next();
-                String url = document.get("url").toString();
-                String domain = CrawlManager.getDomainFromUrl(url);
+        while (cache.size() < 15000) {
+            try (MongoCursor<Document> cursor = collection.aggregate(
+                    List.of(new Document("$sample", new Document("size", 2000)))).iterator()) {
+                while (cursor.hasNext() && cache.size() < 20000) {
+                    Document document = cursor.next();
+                    String url = document.get("url").toString();
+                    String domain = CrawlManager.getDomainFromUrl(url);
 
-                if (!cache.containsKey(domain)) {
-                    cache.put(domain, new ArrayList<>());
+                    if (domain == null) {
+                        continue;
+                    }
+
+                    if (!cache.containsKey(domain)) {
+                        cache.put(domain, new ArrayList<>());
+                    }
+
+                    cache.get(domain).add(url);
                 }
-
-                cache.get(domain).add(url);
+            } catch (MongoException e) {
+                e.printStackTrace();
             }
-        } catch (MongoException e) {
-            e.printStackTrace();
         }
+
+
         lastRefresh = Instant.now();
-        System.out.printf("Finished rebuilding cache %s%n", collection.getNamespace());
+
+        for (Map.Entry<String, List<String>> entry : queueUrlCache.entrySet()) {
+            System.out.println(entry.getKey());
+            for (String s : entry.getValue()) {
+                System.out.println(s);
+            }
+        }
     }
 
     public static void refreshCaches(boolean force) {
-        Instant now = Instant.now();
-            Instant time15MinAgo = now.minus(10, ChronoUnit.MINUTES);
-        if (!lastRefresh.isBefore(Instant.from(time15MinAgo)) && !force) {
+        if (queueUrlCache.size() < 20000 && !force) {
             return;
         }
-        System.out.println("Refreshing read caches...");
         MongoCollection<Document> queueCollection = MongoManager.getQueueCollection();
-        MongoCollection<Document> outCollection = MongoManager.getOutCollection();
-        MongoCollection<Document> doneCollection = MongoManager.getDoneCollection();
         ExecutorService executor = Executors.newFixedThreadPool(1);
 
         executor.submit(() -> {
             refreshCaches(queueCollection, queueUrlCache);
-        });
-
-        executor.submit(() -> {
-            refreshCaches(outCollection, outUrlCache);
-        });
-
-        executor.submit(() -> {
-            refreshCaches(doneCollection, doneUrlCache);
         });
 
         executor.shutdown();

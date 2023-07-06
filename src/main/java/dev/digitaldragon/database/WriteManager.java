@@ -1,7 +1,5 @@
 package dev.digitaldragon.database;
 
-import com.mongodb.MongoWriteException;
-import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
 import dev.digitaldragon.database.mongo.MongoManager;
@@ -10,6 +8,7 @@ import org.bson.conversions.Bson;
 import org.json.JSONObject;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -25,6 +24,10 @@ public class WriteManager {
 
     public static void itemAdd(Database database, JSONObject jsonObject) {
         Document document = Document.parse(jsonObject.toString());
+        itemAdd(database, document);
+    }
+
+    public static void itemAdd(Database database, Document document) {
         document.remove("_id");
         switch (database) {
             case PROCESSING -> processingWrites.add(new InsertOneModel<>(document));
@@ -50,6 +53,49 @@ public class WriteManager {
             case REJECTS -> rejectsWrites.add(new DeleteOneModel<>(filter));
         }
         flush();
+    }
+
+    public static void submitFinishedItem(Document document) {
+        MongoCollection<Document> outCollection = MongoManager.getOutCollection();
+        MongoCollection<Document> doneCollection = MongoManager.getDoneCollection();
+
+        Bson filter = Filters.eq("url", document.get("url"));
+        processingWrites.add(new DeleteManyModel<>(filter));
+        bigqueueWrites.add(new DeleteManyModel<>(filter));
+        queueWrites.add(new DeleteManyModel<>(filter));
+        Document outDocument = outCollection.findOneAndDelete(filter);
+        if (outDocument != null) {
+            for (String key : outDocument.keySet()) {
+                if (!document.containsKey(key)) { //Trust our submitted data over the out document for collisions (ie url)
+                    document.put(key, outDocument.get(key));
+                }
+            }
+        }
+        doneCollection.insertOne(document);
+    }
+
+    public static void moveDocument(String url, Database start, Database end) {
+        MongoCollection<Document> startCollection = Database.toCollection(start);
+        MongoCollection<Document> endCollection = Database.toCollection(end);
+        Bson filter = Filters.eq("url", url);
+
+        Document document = startCollection.findOneAndDelete(filter);
+        if (document != null) {
+            endCollection.insertOne(document);
+        }
+    }
+
+    public static void checkoutQueueItem(String username, String url) {
+        MongoCollection<Document> startCollection = MongoManager.getQueueCollection();
+        MongoCollection<Document> endCollection = MongoManager.getOutCollection();
+        Bson filter = Filters.eq("url", url);
+
+        Document document = startCollection.findOneAndDelete(filter);
+        if (document != null) {
+            document.append("out_for", username);
+            document.append("out_at", Instant.now());
+            endCollection.insertOne(document);
+        }
     }
 
     @Deprecated //TODO TEMPORARY METHOD WHILE SWITCHING EVERYTHING OVER

@@ -4,7 +4,6 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import org.bson.Document;
 
-import javax.print.Doc;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
