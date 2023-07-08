@@ -7,16 +7,10 @@ import dev.digitaldragon.database.Database;
 import dev.digitaldragon.database.ReadManager;
 import dev.digitaldragon.database.WriteManager;
 import dev.digitaldragon.database.mongo.MongoManager;
-import dev.digitaldragon.database.mongo.QueueMover;
 import dev.digitaldragon.database.mongo.UrlsExporter;
-import dev.digitaldragon.queue.CrawlManager;
-import dev.digitaldragon.queue.ItemManager;
-import dev.digitaldragon.queue.Mover;
-import dev.digitaldragon.queue.Processor;
+import dev.digitaldragon.queue.*;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.bson.json.JsonObject;
-import org.eclipse.jetty.util.ajax.JSON;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,18 +26,25 @@ import java.util.stream.Collectors;
 import static spark.Spark.*;
 
 
-public class Main {
+public class CrawlyServer {
 
     public static void main(String[] args) {
+
         MongoManager.initializeDb();
-        ReadManager.refreshCaches(true);
+        MongoCollection<Document> queueCollection = MongoManager.getQueueCollection();
+        MongoCollection<Document> bigQueueCollection = MongoManager.getBigqueueCollection();
+        MongoCollection<Document> processingCollection = MongoManager.getProcessingCollection();
+
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "TRACE");
         Spark.port(4567);
         Spark.init();
 
+        //Reprocesser.processCollectionDocuments(bigQueueCollection, processingCollection);
         ExecutorService executor = Executors.newFixedThreadPool(2);
         executor.submit(Processor::process);
         executor.submit(Mover::move);
+        ReadManager.refreshCaches(true);
+
 
 
         // Define a before filter to validate the username

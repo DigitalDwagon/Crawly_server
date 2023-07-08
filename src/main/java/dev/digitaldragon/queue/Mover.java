@@ -21,7 +21,7 @@ public class Mover {
         int retries = 0;
 
         while (true) {
-            if (queueCollection.countDocuments() > 100000 || bigQueueCollection.countDocuments() <= 0) {
+            if (queueCollection.countDocuments() > 300000 || bigQueueCollection.countDocuments() <= 0) {
                 continue;
             }
 

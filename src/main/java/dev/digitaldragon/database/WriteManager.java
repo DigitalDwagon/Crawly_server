@@ -29,29 +29,12 @@ public class WriteManager {
 
     public static void itemAdd(Database database, Document document) {
         document.remove("_id");
-        switch (database) {
-            case PROCESSING -> processingWrites.add(new InsertOneModel<>(document));
-            case BIGQUEUE -> bigqueueWrites.add(new InsertOneModel<>(document));
-            case QUEUE -> queueWrites.add(new InsertOneModel<>(document));
-            case OUT -> outWrites.add(new InsertOneModel<>(document));
-            case DONE -> MongoManager.getDoneCollection().insertOne(document);
-            case DUPLICATES -> duplicatesWrites.add(new InsertOneModel<>(document));
-            case REJECTS -> rejectsWrites.add(new InsertOneModel<>(document));
-        }
-        flush();
+        Database.toCollection(database).insertOne(document);
     }
 
     public static void itemRemove(Database database, String url) {
         Bson filter = Filters.eq("url", url);
-        switch (database) {
-            case PROCESSING -> processingWrites.add(new DeleteOneModel<>(filter));
-            case BIGQUEUE -> bigqueueWrites.add(new DeleteOneModel<>(filter));
-            case QUEUE -> queueWrites.add(new DeleteOneModel<>(filter));
-            case OUT -> outWrites.add(new DeleteOneModel<>(filter));
-            case DONE -> doneWrites.add(new DeleteOneModel<>(filter));
-            case DUPLICATES -> duplicatesWrites.add(new DeleteOneModel<>(filter));
-            case REJECTS -> rejectsWrites.add(new DeleteOneModel<>(filter));
-        }
+        Database.toCollection(database).findOneAndDelete(filter);
         flush();
     }
 
@@ -72,6 +55,7 @@ public class WriteManager {
             }
         }
         doneCollection.insertOne(document);
+        flush();
     }
 
     public static void moveDocument(String url, Database start, Database end) {

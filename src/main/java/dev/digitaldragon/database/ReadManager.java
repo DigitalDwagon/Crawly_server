@@ -9,6 +9,8 @@ import dev.digitaldragon.queue.CrawlManager;
 import org.bson.Document;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -118,10 +120,9 @@ public class ReadManager {
 
 
     private static void refreshCaches(MongoCollection<Document> collection, Map<String, List<String>> cache) {
-
         cache.clear();
 
-        while (cache.size() < 15000) {
+        while (cache.size() < 7000) {
             try (MongoCursor<Document> cursor = collection.aggregate(
                     List.of(new Document("$sample", new Document("size", 2000)))).iterator()) {
                 while (cursor.hasNext() && cache.size() < 20000) {
@@ -132,12 +133,19 @@ public class ReadManager {
                     if (domain == null) {
                         continue;
                     }
+                    System.out.println(domain);
+                    System.out.println(url);
+                    System.out.println(cache.size());
+                    System.out.println(cache.containsKey(domain));
 
                     if (!cache.containsKey(domain)) {
                         cache.put(domain, new ArrayList<>());
                     }
 
-                    cache.get(domain).add(url);
+                    List<String> domainList = cache.get(domain);
+                    if (!domainList.contains(url)) {
+                        domainList.add(url);
+                    }
                 }
             } catch (MongoException e) {
                 e.printStackTrace();
@@ -156,7 +164,12 @@ public class ReadManager {
     }
 
     public static void refreshCaches(boolean force) {
-        if (queueUrlCache.size() < 20000 && !force) {
+        if ( !force && queueUrlCache.size() > 5000) {
+            System.out.println("skipping refresh");
+            return;
+        }
+        if (lastRefresh.isAfter(Instant.now().minus(30, ChronoUnit.SECONDS))) {
+            System.out.println("too close, skipping refresh");
             return;
         }
         MongoCollection<Document> queueCollection = MongoManager.getQueueCollection();

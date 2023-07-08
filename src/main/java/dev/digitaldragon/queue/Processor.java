@@ -24,13 +24,17 @@ public class Processor {
 
 
     public static void process() {
+
         RateLimiter rateLimiter = RateLimiter.create(1400.0);
         MongoCollection<Document> rejectsCollection = MongoManager.getRejectsCollection();
         MongoCollection<Document> bigQueueCollection = MongoManager.getBigqueueCollection();
         MongoCollection<Document> processingCollection = MongoManager.getProcessingCollection();
+        MongoCollection<Document> queueCollection = MongoManager.getQueueCollection();
+        MongoCollection<Document> doneCollection = MongoManager.getDoneCollection();
+        MongoCollection<Document> outCollection = MongoManager.getOutCollection();
 
         while (true) {
-            if (bigQueueCollection.countDocuments() > 500000 || processingCollection.countDocuments() < 1) {
+            if (bigQueueCollection.countDocuments() > 1000000) {
                 continue;
             }
 
@@ -48,7 +52,7 @@ public class Processor {
 
 
                 System.out.println("Processing: " + url); //todo logging print
-                if (isDuplicate(url, bigQueueCollection) || isDuplicate(url, rejectsCollection)) {
+                if (isDuplicate(url, bigQueueCollection) || isDuplicate(url, queueCollection) || isDuplicate(url, doneCollection) || isDuplicate(url, outCollection)) {
                     document.append("reject_reason", "DUPLICATE");
                     System.out.println("rejected for duplicate: " + url); //todo logging print
                 } else if (!isValidURL(url)) {
